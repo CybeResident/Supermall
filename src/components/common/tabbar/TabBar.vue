@@ -10,7 +10,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 #tab-bar {
   display: flex;
   flex-direction: row;
@@ -19,7 +19,7 @@ export default {
   align-items: center;
 
   background-color: #f3f5f7;
-  box-shadow: rgba(243, 245, 247, 0.8) 0 -5px 4px 1px;
+  /* box-shadow: rgba(243, 245, 247, 0.8) 0 -5px 4px 1px; */
 
   position: fixed;
   left: 0;
