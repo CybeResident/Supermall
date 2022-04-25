@@ -16,17 +16,29 @@ export default {
       scroll: null,
     }
   },
+  props: {
+    probeType: {
+      type: Number,
+      default: 0,
+    },
+  },
+  methods: {
+    scrollTo(x, y, time = 300) {
+      this.scroll.scrollTo(x, y, time)
+    },
+  },
   mounted() {
-    this.$nextTick(() => {
-      this.scroll = new BScroll(this.$refs.wrapper, {
-        scrollY: true,
-        // eventPassthrough: 'horizontal',
-        // mouseWheel: true,
-        // disableMouse: false,
-        // disableTouch: false,
-      })
-      console.log(this.scroll)
+    this.scroll = new BScroll(this.$refs.wrapper, {
+      pullUpLoad: true,
+      click: true,
+      probeType: this.probeType,
     })
+    this.scroll.on('scroll', (position) => {
+      this.$emit('scroll', position)
+    })
+  },
+  updated() {
+    this.scroll.refresh()
   },
   components: {},
 }

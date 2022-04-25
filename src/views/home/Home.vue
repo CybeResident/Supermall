@@ -6,7 +6,12 @@
       <span slot="right">右边</span>
     </nav-bar>
 
-    <scroll class="home-scroll">
+    <scroll
+      class="home-content"
+      ref="scroll"
+      :probe-type="3"
+      @scroll="contentScroll"
+    >
       <home-swiper :banners="banners"></home-swiper>
       <home-recommend-view :recommends="recommends"></home-recommend-view>
       <home-feature-view></home-feature-view>
@@ -17,6 +22,8 @@
       ></tab-control>
       <goods-list :goods="showGoods" class="goods-list-pop"></goods-list>
     </scroll>
+
+    <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -29,6 +36,7 @@ import NavBar from 'components/common/navbar/NavBar'
 import Scroll from 'components/common/scroll/Scroll'
 import TabControl from 'components/content/tabControl/TabControl'
 import GoodsList from 'components/content/goods/GoodsList'
+import BackTop from 'components/content/backTop/BackTop'
 
 import { getHomeMultidata, getHomeGoods } from 'network/home'
 
@@ -43,6 +51,7 @@ export default {
     Scroll,
     TabControl,
     GoodsList,
+    BackTop,
   },
   data() {
     return {
@@ -55,6 +64,8 @@ export default {
       },
       // 记录当前展示的商品列表的类型（名称）
       currentType: 'pop',
+      // 控制数据：是否显示 BackTop 按钮，默认不显示
+      isShowBackTop: false,
     }
   },
   computed: {
@@ -87,6 +98,12 @@ export default {
           this.currentType = 'sell'
           break
       }
+    },
+    backClick() {
+      this.$refs.scroll.scrollTo(0, 0)
+    },
+    contentScroll(position) {
+      this.isShowBackTop = -position.y > 1000
     },
 
     /*
@@ -135,7 +152,7 @@ export default {
   width: 100%;
   margin-top: 10px;
 }
-.home-scroll {
+.home-content {
   height: 100%;
   /* height: 400px; */
   overflow: hidden;
