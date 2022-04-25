@@ -10,7 +10,9 @@
       class="home-content"
       ref="scroll"
       :probe-type="3"
+      :pull-up-load="true"
       @scroll="contentScroll"
+      @pullingUp="loadMore"
     >
       <home-swiper :banners="banners"></home-swiper>
       <home-recommend-view :recommends="recommends"></home-recommend-view>
@@ -105,6 +107,9 @@ export default {
     contentScroll(position) {
       this.isShowBackTop = -position.y > 1000
     },
+    loadMore() {
+      this.getHomeGoods(this.currentType)
+    },
 
     /*
      *  网络请求相关的方法
@@ -118,9 +123,10 @@ export default {
     },
     getHomeGoods(type) {
       const page = this.goods[type].page + 1
-      getHomeGoods(type, page).then((res) => {
+      return getHomeGoods(type, page).then((res) => {
         this.goods[type].list.push(...res.data.list)
         this.goods[type].page += 1
+        this.$refs.scroll.finishPullUp()
       })
     },
   },
