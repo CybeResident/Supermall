@@ -41,6 +41,7 @@ import GoodsList from 'components/content/goods/GoodsList'
 import BackTop from 'components/content/backTop/BackTop'
 
 import { getHomeMultidata, getHomeGoods } from 'network/home'
+import { debounce } from 'common/utils'
 
 export default {
   name: 'Home',
@@ -84,6 +85,13 @@ export default {
     this.getHomeGoods('new')
     this.getHomeGoods('sell')
   },
+  mounted() {
+    // 3. 监听GoodsListItem中的图片加载是否完成
+    const refresh = debounce(this.$refs.scroll.refresh, 200)
+    this.$bus.$on('itemImgLoad', () => {
+      refresh()
+    })
+  },
   methods: {
     /*
      *  事件监听相关的方法
@@ -123,9 +131,10 @@ export default {
     },
     getHomeGoods(type) {
       const page = this.goods[type].page + 1
-      return getHomeGoods(type, page).then((res) => {
+      getHomeGoods(type, page).then((res) => {
         this.goods[type].list.push(...res.data.list)
         this.goods[type].page += 1
+        // 调用finishPullUp，为下一次 pullingUp 事件作准备
         this.$refs.scroll.finishPullUp()
       })
     },
