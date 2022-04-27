@@ -84,6 +84,8 @@ export default {
       tabOffsetTop: 0,
       // 记录 TabControl 的吸顶状态
       isTabFixed: false,
+      // 保存当前滚动位置Y
+      saveY: 0,
     }
   },
   computed: {
@@ -106,6 +108,14 @@ export default {
     this.$bus.$on('itemImgLoad', () => {
       refresh()
     })
+  },
+  activated() {
+    this.$refs.scroll.scrollTo(0, this.saveY, 0)
+
+    this.$refs.scroll.refresh()
+  },
+  deactivated() {
+    this.saveY = this.$refs.scroll.getScrollY()
   },
   methods: {
     /*

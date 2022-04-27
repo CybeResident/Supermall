@@ -36,6 +36,10 @@ export default {
     refresh() {
       this.scroll && this.scroll.refresh()
     },
+    // 获取当前页面的滚动位置Y
+    getScrollY() {
+      return this.scroll ? this.scroll.y : 0
+    },
   },
   mounted() {
     // 1. 创建 BScroll 对象
