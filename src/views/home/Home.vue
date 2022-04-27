@@ -41,9 +41,9 @@
 </template>
 
 <script>
-import HomeSwiper from './childComponents/HomeSwiper.vue'
-import HomeRecommendView from './childComponents/HomeRecommendView.vue'
-import HomeFeatureView from './childComponents/HomeFeatureView.vue'
+import HomeSwiper from './childComps/HomeSwiper.vue'
+import HomeRecommendView from './childComps/HomeRecommendView.vue'
+import HomeFeatureView from './childComps/HomeFeatureView.vue'
 
 import NavBar from 'components/common/navbar/NavBar'
 import Scroll from 'components/common/scroll/Scroll'
