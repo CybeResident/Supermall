@@ -6,6 +6,14 @@
       <span slot="right">右边</span>
     </nav-bar>
 
+    <tab-control
+      class="tab-control-top"
+      :titles="['流行', '新款', '精选']"
+      @tabClick="tabClick"
+      ref="tabControlTop"
+      v-show="isTabFixed"
+    ></tab-control>
+
     <scroll
       class="home-content"
       ref="scroll"
@@ -14,13 +22,16 @@
       @scroll="contentScroll"
       @pullingUp="loadMore"
     >
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper
+        :banners="banners"
+        @swiper-img-load="swiperImgLoad"
+      ></home-swiper>
       <home-recommend-view :recommends="recommends"></home-recommend-view>
       <home-feature-view></home-feature-view>
       <tab-control
-        class="tab-control"
         :titles="['流行', '新款', '精选']"
         @tabClick="tabClick"
+        ref="tabControl"
       ></tab-control>
       <goods-list :goods="showGoods" class="goods-list-pop"></goods-list>
     </scroll>
@@ -69,6 +80,10 @@ export default {
       currentType: 'pop',
       // 控制数据：是否显示 BackTop 按钮，默认不显示
       isShowBackTop: false,
+      // 记录 TabControl 的 offsetTop
+      tabOffsetTop: 0,
+      // 记录 TabControl 的吸顶状态
+      isTabFixed: false,
     }
   },
   computed: {
@@ -86,7 +101,7 @@ export default {
     this.getHomeGoods('sell')
   },
   mounted() {
-    // 3. 监听GoodsListItem中的图片加载是否完成
+    // 1. 监听GoodsListItem中的图片加载是否完成
     const refresh = debounce(this.$refs.scroll.refresh, 200)
     this.$bus.$on('itemImgLoad', () => {
       refresh()
@@ -108,15 +123,25 @@ export default {
           this.currentType = 'sell'
           break
       }
+      this.$refs.tabControl.currentIndex = index
+      this.$refs.tabControlTop.currentIndex = index
     },
     backClick() {
       this.$refs.scroll.scrollTo(0, 0)
     },
     contentScroll(position) {
+      // 1. 判断 回到顶部 按钮是否出现
       this.isShowBackTop = -position.y > 1000
+
+      // 2. 判断 TabControl 是否吸顶
+      this.isTabFixed = -position.y >= this.tabOffsetTop - 44
     },
     loadMore() {
       this.getHomeGoods(this.currentType)
+    },
+    swiperImgLoad() {
+      // 赋值，记录TabControl的offsetTop
+      this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop
     },
 
     /*
@@ -145,30 +170,31 @@ export default {
 <style scoped>
 #home {
   height: calc(100vh - 54px);
-  padding-top: 44px;
+  /* padding-top: 44px; */
   /* position: relative; */
 }
 .home-nav {
   background-color: var(--color-tint);
   color: #fff;
 
-  position: fixed;
+  /* 使用原生滚动时，用来防止顶部导航栏一起滚动 */
+  /* position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  z-index: 2;
+  z-index: 2; */
 }
-.tab-control {
+/* .tab-control {
   position: sticky;
   top: 44px;
   z-index: 1;
-}
+} */
 .goods-list-pop {
   width: 100%;
   margin-top: 10px;
 }
 .home-content {
-  height: 100%;
+  height: calc(100% - 44px);
   /* height: 400px; */
   overflow: hidden;
   /* position: absolute;
@@ -176,5 +202,13 @@ export default {
   right: 0;
   top: 44px;
   bottom: 0; */
+}
+
+.tab-control-top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44px;
+  z-index: 1;
 }
 </style>
