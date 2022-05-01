@@ -105,8 +105,9 @@ export default {
   mounted() {
     // 1. 监听GoodsListItem中的图片加载是否完成
     const refresh = debounce(this.$refs.scroll.refresh, 200)
-    this.$bus.$on('itemImgLoad', () => {
+    this.$bus.$on('item-img-load', () => {
       refresh()
+      // this.$refs.scroll.refresh()
     })
   },
   activated() {

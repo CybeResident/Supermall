@@ -31,9 +31,11 @@ export default {
     }
   },
   methods: {
+    // 点击选项时，通过改变 currentIndex，实现样式变化
     titleClick(index) {
       this.currentIndex = index
     },
+    // 返回按钮的返回功能
     backClick() {
       this.$router.back()
     },
