@@ -14,12 +14,15 @@
         @image-load="imageLoad"
       ></detail-goods-info>
       <detail-param-info :param-info="paramInfo"></detail-param-info>
+      <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
+      <goods-list :goods="recommends"></goods-list>
     </scroll>
   </div>
 </template>
 
 <script>
 import Scroll from 'components/common/scroll/Scroll'
+import GoodsList from 'components/content/goods/GoodsList'
 
 import DetailNavBar from './childComps/DetailNavBar.vue'
 import DetailSwiper from './childComps/DetailSwiper.vue'
@@ -27,8 +30,17 @@ import DetailBaseInfo from './childComps/DetailBaseInfo.vue'
 import DetailShopInfo from './childComps/DetailShopInfo.vue'
 import DetailGoodsInfo from './childComps/DetailGoodsInfo.vue'
 import DetailParamInfo from './childComps/DetailParamInfo.vue'
+import DetailCommentInfo from './childComps/DetailCommentInfo.vue'
 
-import { getDetail, Goods, GoodsParam, Shop } from 'network/detail.js'
+import {
+  getDetail,
+  Goods,
+  GoodsParam,
+  Shop,
+  getRecommend,
+} from 'network/detail.js'
+import { debounce } from 'common/utils'
+import { itemListenerMixin } from 'common/mixin'
 
 export default {
   name: 'Detail',
@@ -46,6 +58,10 @@ export default {
       detailInfo: {},
       // 储存商品参数信息
       paramInfo: {},
+      // 储存商品评论
+      commentInfo: {},
+      // 储存推荐信息
+      recommends: [],
     }
   },
   methods: {
@@ -53,9 +69,11 @@ export default {
       this.$refs.scroll.refresh()
     },
   },
+  mixins: [itemListenerMixin],
 
   components: {
     Scroll,
+    GoodsList,
 
     DetailNavBar,
     DetailSwiper,
@@ -63,6 +81,7 @@ export default {
     DetailShopInfo,
     DetailGoodsInfo,
     DetailParamInfo,
+    DetailCommentInfo,
   },
   created() {
     // 1. 保存传入的id
@@ -70,7 +89,7 @@ export default {
 
     // 2. 根据 iid 请求详情页数据
     getDetail(this.iid).then((res) => {
-      console.log(res)
+      // console.log(res)
       const data = res.result
 
       // 2.1 获取顶部轮播图数据
@@ -90,7 +109,22 @@ export default {
         data.itemParams.info,
         data.itemParams.rule
       )
+      // 2.6 获取商品评论
+      // 判断，当存在商品评论时，进行获取
+      if (data.rate.cRate !== 0) {
+        this.commentInfo = data.rate.list[0]
+      }
     })
+
+    // 3. 请求推荐信息
+    getRecommend().then((res) => {
+      console.log(res)
+      this.recommends = res.data.list
+    })
+  },
+  mounted() {},
+  destroyed() {
+    this.$bus.$off('item-img-load', this.itemImgListener)
   },
 }
 </script>

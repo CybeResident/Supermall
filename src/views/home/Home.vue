@@ -33,7 +33,7 @@
         @tabClick="tabClick"
         ref="tabControl"
       ></tab-control>
-      <goods-list :goods="showGoods" class="goods-list-pop"></goods-list>
+      <goods-list :goods="showGoods" class="goods-list"></goods-list>
     </scroll>
 
     <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
@@ -53,6 +53,7 @@ import BackTop from 'components/content/backTop/BackTop'
 
 import { getHomeMultidata, getHomeGoods } from 'network/home'
 import { debounce } from 'common/utils'
+import { itemListenerMixin } from 'common/mixin'
 
 export default {
   name: 'Home',
@@ -93,6 +94,7 @@ export default {
       return this.goods[this.currentType].list
     },
   },
+  mixins: [itemListenerMixin],
   created() {
     // 1. 请求 轮播图、推荐 数据
     this.getHomeMultidata()
@@ -102,21 +104,17 @@ export default {
     this.getHomeGoods('new')
     this.getHomeGoods('sell')
   },
-  mounted() {
-    // 1. 监听GoodsListItem中的图片加载是否完成
-    const refresh = debounce(this.$refs.scroll.refresh, 200)
-    this.$bus.$on('item-img-load', () => {
-      refresh()
-      // this.$refs.scroll.refresh()
-    })
-  },
+  mounted() {},
   activated() {
     this.$refs.scroll.scrollTo(0, this.saveY, 0)
 
     this.$refs.scroll.refresh()
   },
   deactivated() {
+    // 1. 保存垂直滚动方向的Y坐标
     this.saveY = this.$refs.scroll.getScrollY()
+    // 2. 取消全局事件 item-img-load 的监听
+    this.$bus.$off('item-img-load')
   },
   methods: {
     /*
@@ -134,8 +132,10 @@ export default {
           this.currentType = 'sell'
           break
       }
-      this.$refs.tabControl.currentIndex = index
-      this.$refs.tabControlTop.currentIndex = index
+      if (this.$refs.tabControlTop !== undefined) {
+        this.$refs.tabControl.currentIndex = index
+        this.$refs.tabControlTop.currentIndex = index
+      }
     },
     backClick() {
       this.$refs.scroll.scrollTo(0, 0)
@@ -200,7 +200,7 @@ export default {
   top: 44px;
   z-index: 1;
 } */
-.goods-list-pop {
+.goods-list {
   width: 100%;
   margin-top: 10px;
 }
