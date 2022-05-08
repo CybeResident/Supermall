@@ -5,81 +5,53 @@
       <span slot="middle">购物街</span>
       <span slot="right">右边</span>
     </nav-bar>
-    <home-swiper :banners="banners"></home-swiper>
-    <home-recommend-view :recommends="recommends"></home-recommend-view>
-    <home-feature-view></home-feature-view>
-    <tab-control
-      class="tab-control"
-      :titles="['流行', '新款', '精选']"
-      @tabClick="tabClick"
-    ></tab-control>
-    <goods-list :goods="showGoods" class="goods-list-pop"></goods-list>
 
-    <ul>
-      <li>1</li>
-      <li>2</li>
-      <li>3</li>
-      <li>4</li>
-      <li>5</li>
-      <li>6</li>
-      <li>7</li>
-      <li>8</li>
-      <li>9</li>
-      <li>10</li>
-      <li>11</li>
-      <li>12</li>
-      <li>13</li>
-      <li>14</li>
-      <li>15</li>
-      <li>16</li>
-      <li>17</li>
-      <li>18</li>
-      <li>19</li>
-      <li>20</li>
-      <li>21</li>
-      <li>22</li>
-      <li>23</li>
-      <li>24</li>
-      <li>25</li>
-      <li>26</li>
-      <li>27</li>
-      <li>28</li>
-      <li>29</li>
-      <li>30</li>
-      <li>31</li>
-      <li>32</li>
-      <li>33</li>
-      <li>34</li>
-      <li>35</li>
-      <li>36</li>
-      <li>37</li>
-      <li>38</li>
-      <li>39</li>
-      <li>40</li>
-      <li>41</li>
-      <li>42</li>
-      <li>43</li>
-      <li>44</li>
-      <li>45</li>
-      <li>46</li>
-      <li>47</li>
-      <li>48</li>
-      <li>49</li>
-      <li>50</li>
-    </ul>
+    <tab-control
+      class="tab-control-top"
+      :titles="['流行', '新款', '精选']"
+      @tab-click="tabClick"
+      ref="tabControlTop"
+      v-show="isTabFixed"
+    ></tab-control>
+
+    <scroll
+      class="home-content"
+      ref="scroll"
+      :probe-type="3"
+      :pull-up-load="true"
+      @scroll="contentScroll"
+      @pulling-up="loadMore"
+    >
+      <home-swiper
+        :banners="banners"
+        @swiper-img-load="swiperImgLoad"
+      ></home-swiper>
+      <home-recommend-view :recommends="recommends"></home-recommend-view>
+      <home-feature-view></home-feature-view>
+      <tab-control
+        :titles="['流行', '新款', '精选']"
+        @tab-click="tabClick"
+        ref="tabControl"
+      ></tab-control>
+      <goods-list :goods="showGoods" class="goods-list"></goods-list>
+    </scroll>
+
+    <back-top @click.native="backTop" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
 <script>
-import HomeSwiper from './childComponents/HomeSwiper.vue'
-import HomeRecommendView from './childComponents/HomeRecommendView.vue'
-import HomeFeatureView from './childComponents/HomeFeatureView.vue'
+import HomeSwiper from './childComps/HomeSwiper.vue'
+import HomeRecommendView from './childComps/HomeRecommendView.vue'
+import HomeFeatureView from './childComps/HomeFeatureView.vue'
 
 import NavBar from 'components/common/navbar/NavBar'
+import Scroll from 'components/common/scroll/Scroll'
 import TabControl from 'components/content/tabControl/TabControl'
 import GoodsList from 'components/content/goods/GoodsList'
 
 import { getHomeMultidata, getHomeGoods } from 'network/home'
+import { itemListenerMixin, backTopMixin } from 'common/mixin'
 
 export default {
   name: 'Home',
@@ -89,6 +61,7 @@ export default {
     HomeFeatureView,
 
     NavBar,
+    Scroll,
     TabControl,
     GoodsList,
   },
@@ -103,6 +76,15 @@ export default {
       },
       // 记录当前展示的商品列表的类型（名称）
       currentType: 'pop',
+
+      // 记录 TabControl 的 offsetTop
+      tabOffsetTop: 0,
+      // 记录 TabControl 的吸顶状态
+      isTabFixed: false,
+      // 保存当前滚动位置Y
+      saveY: 0,
+      // 保存标识符：判断组件是否为非首次激活（即是否为再次激活）
+      reActivated: false,
     }
   },
   computed: {
@@ -110,14 +92,31 @@ export default {
       return this.goods[this.currentType].list
     },
   },
+  mixins: [itemListenerMixin, backTopMixin],
   created() {
     // 1. 请求 轮播图、推荐 数据
     this.getHomeMultidata()
 
-    // 2.请求商品数据
+    // 2. 请求商品数据
     this.getHomeGoods('pop')
     this.getHomeGoods('new')
     this.getHomeGoods('sell')
+
+    // 3. 创建防抖函数
+  },
+  mounted() {},
+  activated() {
+    this.$refs.scroll.scrollTo(0, this.saveY, 0)
+
+    this.$refs.scroll.refresh()
+
+    this.$bus.$on('item-img-load', this.itemImgListener)
+  },
+  deactivated() {
+    // 1. 保存垂直滚动方向的Y坐标
+    this.saveY = this.$refs.scroll.getScrollY()
+    // 2. 取消全局事件 item-img-load 的监听
+    this.$bus.$off('item-img-load')
   },
   methods: {
     /*
@@ -135,6 +134,26 @@ export default {
           this.currentType = 'sell'
           break
       }
+      if (this.$refs.tabControlTop !== undefined) {
+        this.$refs.tabControl.currentIndex = index
+        this.$refs.tabControlTop.currentIndex = index
+      }
+    },
+
+    contentScroll(position) {
+      // 1. 判断 回到顶部 按钮是否出现
+      this.listenShowBackTop(position)
+
+      // 2. 判断 TabControl 是否吸顶
+      this.isTabFixed = -position.y >= this.tabOffsetTop
+    },
+    loadMore() {
+      this.getHomeGoods(this.currentType)
+    },
+    swiperImgLoad() {
+      // 赋值，记录TabControl的offsetTop
+      //【注意】此时 TabControl 的 offsetParent 是 <body>
+      this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop
     },
 
     /*
@@ -152,6 +171,8 @@ export default {
       getHomeGoods(type, page).then((res) => {
         this.goods[type].list.push(...res.data.list)
         this.goods[type].page += 1
+        // 调用finishPullUp，为下一次 pullingUp 事件作准备
+        this.$refs.scroll.finishPullUp()
       })
     },
   },
@@ -160,19 +181,46 @@ export default {
 
 <style scoped>
 #home {
-  padding-top: 44px;
+  height: calc(100vh - 54px);
+  /* padding-top: 44px; */
+  /* position: relative; */
 }
 .home-nav {
   background-color: var(--color-tint);
   color: #fff;
+
+  /* 使用原生滚动时，用来防止顶部导航栏一起滚动 */
+  /* position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2; */
 }
-.tab-control {
+/* .tab-control {
   position: sticky;
   top: 44px;
   z-index: 1;
-}
-.goods-list-pop {
+} */
+.goods-list {
   width: 100%;
   margin-top: 10px;
+}
+.home-content {
+  height: calc(100% - 44px);
+  /* height: 400px; */
+  overflow: hidden;
+  /* position: absolute;
+  left: 0;
+  right: 0;
+  top: 44px;
+  bottom: 0; */
+}
+
+.tab-control-top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44px;
+  z-index: 1;
 }
 </style>

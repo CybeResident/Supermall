@@ -1,13 +1,11 @@
 <template>
-  <div class="goods-item">
-    <a :href="goodsItem.link">
-      <img :src="goodsItem.show.img" alt="" />
-      <div class="goods-info">
-        <p>{{ goodsItem.title }}</p>
-        <span class="price">{{ goodsItem.price }}</span>
-        <span class="collect">{{ goodsItem.cfav }}</span>
-      </div>
-    </a>
+  <div class="goods-item" @click="itemClick">
+    <img :src="showImage" alt="" @load="itemImgLoad" />
+    <div class="goods-info">
+      <p>{{ goodsItem.title }}</p>
+      <span class="price">{{ goodsItem.price }}</span>
+      <span class="collect">{{ goodsItem.cfav }}</span>
+    </div>
   </div>
 </template>
 
@@ -25,23 +23,36 @@ export default {
   data() {
     return {}
   },
+  computed: {
+    showImage() {
+      return this.goodsItem.image || this.goodsItem.show.img
+    },
+  },
+  methods: {
+    itemImgLoad() {
+      this.$bus.$emit('item-img-load')
+    },
+    itemClick() {
+      this.$router.push('/detail/' + this.goodsItem.iid)
+    },
+  },
   components: {},
 }
 </script>
 
 <style scoped>
-.goods-item > a {
+.goods-item {
   display: block;
   padding-bottom: 40px;
   position: relative;
 }
 
-.goods-item > a img {
+.goods-item img {
   width: 100%;
   border-radius: 5px;
 }
 
-.goods-item > a .goods-info {
+.goods-item .goods-info {
   position: absolute;
   bottom: 5px;
   left: 0;
@@ -52,27 +63,27 @@ export default {
   /* border: 1px solid red; */
 }
 
-.goods-item > a .goods-info p {
+.goods-item .goods-info p {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   margin: 0 3px 3px;
 }
 
-.goods-item > a .goods-info .price {
+.goods-item .goods-info .price {
   color: var(--color-high-text);
   margin-right: 20px;
 }
 
-.goods-item > a .goods-info .favorites {
+.goods-item .goods-info .favorites {
   position: relative;
 }
 
-.goods-item > a .goods-info .collect {
+.goods-item .goods-info .collect {
   position: relative;
 }
 
-.goods-item > a .goods-info .collect::before {
+.goods-item .goods-info .collect::before {
   content: '';
   position: absolute;
   left: -15px;
