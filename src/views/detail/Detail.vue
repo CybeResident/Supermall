@@ -1,7 +1,16 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav"></detail-nav-bar>
-    <scroll class="detail-content" ref="scroll">
+    <detail-nav-bar
+      class="detail-nav"
+      ref="nav"
+      @nav-bar-click="navBarClick"
+    ></detail-nav-bar>
+    <scroll
+      class="detail-content"
+      ref="scroll"
+      @scroll="contentScroll"
+      :probe-type="3"
+    >
       <detail-swiper
         :top-images="topImages"
         @image-load="imageLoad"
@@ -13,10 +22,19 @@
         :detail-info="detailInfo"
         @image-load="imageLoad"
       ></detail-goods-info>
-      <detail-param-info :param-info="paramInfo"></detail-param-info>
-      <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
-      <goods-list :goods="recommends"></goods-list>
+      <detail-param-info
+        :param-info="paramInfo"
+        ref="paramInfo"
+      ></detail-param-info>
+      <detail-comment-info
+        :comment-info="commentInfo"
+        ref="commentInfo"
+      ></detail-comment-info>
+      <goods-list :goods="recommends" ref="recommend"></goods-list>
     </scroll>
+    <detail-bottom-bar @add-cart="addToCart"></detail-bottom-bar>
+
+    <back-top @click.native="backTop" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -31,6 +49,7 @@ import DetailShopInfo from './childComps/DetailShopInfo.vue'
 import DetailGoodsInfo from './childComps/DetailGoodsInfo.vue'
 import DetailParamInfo from './childComps/DetailParamInfo.vue'
 import DetailCommentInfo from './childComps/DetailCommentInfo.vue'
+import DetailBottomBar from './childComps/DetailBottomBar.vue'
 
 import {
   getDetail,
@@ -39,8 +58,7 @@ import {
   Shop,
   getRecommend,
 } from 'network/detail.js'
-import { debounce } from 'common/utils'
-import { itemListenerMixin } from 'common/mixin'
+import { itemListenerMixin, backTopMixin } from 'common/mixin'
 
 export default {
   name: 'Detail',
@@ -62,14 +80,55 @@ export default {
       commentInfo: {},
       // 储存推荐信息
       recommends: [],
+      // 储存导航栏选项的距离顶部的Y值（Y坐标）
+      themeTopYs: [],
+      // 储存滚动内容的当前所处区域的index值
+      currentIndex: 0,
     }
   },
   methods: {
     imageLoad() {
       this.$refs.scroll.refresh()
+
+      this.themeTopYs = []
+      this.themeTopYs.push(0)
+      this.themeTopYs.push(this.$refs.paramInfo.$el.offsetTop)
+      this.themeTopYs.push(this.$refs.commentInfo.$el.offsetTop)
+      this.themeTopYs.push(this.$refs.recommend.$el.offsetTop)
+    },
+    navBarClick(index) {
+      this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 0)
+    },
+    contentScroll(position) {
+      // 1. 滚动内容时，导航栏选项的样式发生变化
+      if (-position.y < this.themeTopYs[1]) {
+        this.$refs.nav.currentIndex = 0
+      } else if (-position.y < this.themeTopYs[2]) {
+        this.$refs.nav.currentIndex = 1
+      } else if (-position.y < this.themeTopYs[3]) {
+        this.$refs.nav.currentIndex = 2
+      } else {
+        this.$refs.nav.currentIndex = 3
+      }
+
+      // 2. 是否显示 回到顶部 按钮
+      this.listenShowBackTop(position)
+    },
+    addToCart() {
+      // 1. 获取购物车里需要展示的信息
+      const product = {}
+      product.image = this.topImages[0]
+      product.title = this.goods.title
+      product.desc = this.goods.desc
+      product.price = this.goods.realPrice
+      product.iid = this.iid
+
+      // 2. 将商品添加到购物车里
+      this.$store.dispatch('addCart', product)
+      console.log(this.$store.state.cartList[0])
     },
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
 
   components: {
     Scroll,
@@ -82,6 +141,7 @@ export default {
     DetailGoodsInfo,
     DetailParamInfo,
     DetailCommentInfo,
+    DetailBottomBar,
   },
   created() {
     // 1. 保存传入的id
@@ -118,7 +178,7 @@ export default {
 
     // 3. 请求推荐信息
     getRecommend().then((res) => {
-      console.log(res)
+      // console.log(res)
       this.recommends = res.data.list
     })
   },
@@ -132,6 +192,9 @@ export default {
 <style scoped>
 #detail {
   height: calc(100vh - 54px);
+  position: relative;
+  z-index: 9;
+  background-color: #fff;
 }
 .detail-nav {
   position: relative;

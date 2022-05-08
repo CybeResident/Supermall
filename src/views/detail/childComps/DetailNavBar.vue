@@ -10,7 +10,7 @@
           :key="item"
           class="title-item"
           :class="{ active: index === currentIndex }"
-          @click="titleClick(index)"
+          @click="navBarClick(index)"
         >
           {{ item }}
         </div>
@@ -32,8 +32,10 @@ export default {
   },
   methods: {
     // 点击选项时，通过改变 currentIndex，实现样式变化
-    titleClick(index) {
+    navBarClick(index) {
       this.currentIndex = index
+      console.log(this.currentIndex)
+      this.$emit('nav-bar-click', index)
     },
     // 返回按钮的返回功能
     backClick() {

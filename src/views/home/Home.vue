@@ -9,7 +9,7 @@
     <tab-control
       class="tab-control-top"
       :titles="['流行', '新款', '精选']"
-      @tabClick="tabClick"
+      @tab-click="tabClick"
       ref="tabControlTop"
       v-show="isTabFixed"
     ></tab-control>
@@ -20,7 +20,7 @@
       :probe-type="3"
       :pull-up-load="true"
       @scroll="contentScroll"
-      @pullingUp="loadMore"
+      @pulling-up="loadMore"
     >
       <home-swiper
         :banners="banners"
@@ -30,13 +30,13 @@
       <home-feature-view></home-feature-view>
       <tab-control
         :titles="['流行', '新款', '精选']"
-        @tabClick="tabClick"
+        @tab-click="tabClick"
         ref="tabControl"
       ></tab-control>
       <goods-list :goods="showGoods" class="goods-list"></goods-list>
     </scroll>
 
-    <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
+    <back-top @click.native="backTop" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -49,11 +49,9 @@ import NavBar from 'components/common/navbar/NavBar'
 import Scroll from 'components/common/scroll/Scroll'
 import TabControl from 'components/content/tabControl/TabControl'
 import GoodsList from 'components/content/goods/GoodsList'
-import BackTop from 'components/content/backTop/BackTop'
 
 import { getHomeMultidata, getHomeGoods } from 'network/home'
-import { debounce } from 'common/utils'
-import { itemListenerMixin } from 'common/mixin'
+import { itemListenerMixin, backTopMixin } from 'common/mixin'
 
 export default {
   name: 'Home',
@@ -66,7 +64,6 @@ export default {
     Scroll,
     TabControl,
     GoodsList,
-    BackTop,
   },
   data() {
     return {
@@ -79,14 +76,15 @@ export default {
       },
       // 记录当前展示的商品列表的类型（名称）
       currentType: 'pop',
-      // 控制数据：是否显示 BackTop 按钮，默认不显示
-      isShowBackTop: false,
+
       // 记录 TabControl 的 offsetTop
       tabOffsetTop: 0,
       // 记录 TabControl 的吸顶状态
       isTabFixed: false,
       // 保存当前滚动位置Y
       saveY: 0,
+      // 保存标识符：判断组件是否为非首次激活（即是否为再次激活）
+      reActivated: false,
     }
   },
   computed: {
@@ -94,21 +92,25 @@ export default {
       return this.goods[this.currentType].list
     },
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   created() {
     // 1. 请求 轮播图、推荐 数据
     this.getHomeMultidata()
 
-    // 2.请求商品数据
+    // 2. 请求商品数据
     this.getHomeGoods('pop')
     this.getHomeGoods('new')
     this.getHomeGoods('sell')
+
+    // 3. 创建防抖函数
   },
   mounted() {},
   activated() {
     this.$refs.scroll.scrollTo(0, this.saveY, 0)
 
     this.$refs.scroll.refresh()
+
+    this.$bus.$on('item-img-load', this.itemImgListener)
   },
   deactivated() {
     // 1. 保存垂直滚动方向的Y坐标
@@ -137,21 +139,20 @@ export default {
         this.$refs.tabControlTop.currentIndex = index
       }
     },
-    backClick() {
-      this.$refs.scroll.scrollTo(0, 0)
-    },
+
     contentScroll(position) {
       // 1. 判断 回到顶部 按钮是否出现
-      this.isShowBackTop = -position.y > 1000
+      this.listenShowBackTop(position)
 
       // 2. 判断 TabControl 是否吸顶
-      this.isTabFixed = -position.y >= this.tabOffsetTop - 44
+      this.isTabFixed = -position.y >= this.tabOffsetTop
     },
     loadMore() {
       this.getHomeGoods(this.currentType)
     },
     swiperImgLoad() {
       // 赋值，记录TabControl的offsetTop
+      //【注意】此时 TabControl 的 offsetParent 是 <body>
       this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop
     },
 

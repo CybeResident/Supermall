@@ -59,7 +59,7 @@ export default {
     // 3. 监听上拉事件
     if (this.pullUpLoad) {
       this.scroll.on('pullingUp', () => {
-        this.$emit('pullingUp')
+        this.$emit('pulling-up')
       })
     }
   },
@@ -71,4 +71,7 @@ export default {
 </script>
 
 <style scoped>
+.wrapper {
+  position: relative;
+}
 </style>
