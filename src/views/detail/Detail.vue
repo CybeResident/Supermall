@@ -125,7 +125,7 @@ export default {
 
       // 2. 将商品添加到购物车里
       this.$store.dispatch('addCart', product)
-      console.log(this.$store.state.cartList[0])
+      // console.log(this.$store.state.cartList[0])
     },
   },
   mixins: [itemListenerMixin, backTopMixin],

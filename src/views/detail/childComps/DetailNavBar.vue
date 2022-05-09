@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import NavBar from 'components/common/navbar/NavBar.vue'
+import NavBar from 'components/common/navBar/NavBar.vue'
 
 export default {
   name: 'DetailNavBar',

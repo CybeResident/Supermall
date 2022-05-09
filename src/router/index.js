@@ -4,7 +4,7 @@ import VueRouter from 'vue-router'
 // 懒加载路由组件
 const Home = () => import('../views/home/Home.vue')
 const Category = () => import('../views/category/Category.vue')
-const Shopcart = () => import('../views/shopcart/Shopcart.vue')
+const Cart = () => import('../views/cart/Cart.vue')
 const Profile = () => import('../views/profile/Profile.vue')
 const Detail = () => import('../views/detail/Detail.vue')
 
@@ -26,8 +26,8 @@ const routes = [
     component: Category
   },
   {
-    path: '/shopcart',
-    component: Shopcart
+    path: '/cart',
+    component: Cart
   },
   {
     path: '/profile',

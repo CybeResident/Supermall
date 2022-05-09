@@ -45,7 +45,7 @@ import HomeSwiper from './childComps/HomeSwiper.vue'
 import HomeRecommendView from './childComps/HomeRecommendView.vue'
 import HomeFeatureView from './childComps/HomeFeatureView.vue'
 
-import NavBar from 'components/common/navbar/NavBar'
+import NavBar from 'components/common/navBar/NavBar'
 import Scroll from 'components/common/scroll/Scroll'
 import TabControl from 'components/content/tabControl/TabControl'
 import GoodsList from 'components/content/goods/GoodsList'
