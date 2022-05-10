@@ -10,7 +10,7 @@
       </div>
       <div class="total-price">合计：￥{{ totalPrice }}</div>
     </div>
-    <div class="bar-right">去结算({{ checkLength }})</div>
+    <div class="bar-right" @click="calcClick">去结算({{ checkLength }})</div>
   </div>
 </template>
 
@@ -62,6 +62,11 @@ export default {
       // 【简化】item.checked 的值，就是 this.isCheckedAll 的反值
       // 【失败】当 item.checked 改变时，isCheckedAll 也会改变
       // this.cartList.forEach((item) => (item.checked = !this.isCheckedAll))
+    },
+    calcClick() {
+      if (!this.isCheckedAll) {
+        this.$toast.show('请选择商品')
+      }
     },
   },
   components: {
