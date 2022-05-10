@@ -39,6 +39,8 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+
 import Scroll from 'components/common/scroll/Scroll'
 import GoodsList from 'components/content/goods/GoodsList'
 
@@ -84,9 +86,13 @@ export default {
       themeTopYs: [],
       // 储存滚动内容的当前所处区域的index值
       currentIndex: 0,
+
+      toastMsg: '',
+      isToastShow: false,
     }
   },
   methods: {
+    ...mapActions(['addCart']),
     imageLoad() {
       this.$refs.scroll.refresh()
 
@@ -124,8 +130,9 @@ export default {
       product.iid = this.iid
 
       // 2. 将商品添加到购物车里
-      this.$store.dispatch('addCart', product)
-      console.log(this.$store.state.cartList[0])
+      this.addCart(product).then((res) => {
+        this.$toast.show(res)
+      })
     },
   },
   mixins: [itemListenerMixin, backTopMixin],
